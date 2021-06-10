@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#4776E6</color>
+    <color name="colorSecond">#8E54E9</color>
+    <color name="colorPrimaryDark">#00574B</color>
+    <color name="colorAccent">#D81B60</color>
+    <color name="black">#000000</color>
+    <color name="white">#ffffff</color>
+    <color name="normal">#8BC34A</color>
+    <color name="elevated">#E3D02F</color>
+    <color name="highStgOne">#E68F0F</color>
+    <color name="highStgTwo">#F44336</color>
+    <color name="crisis">#AA241A</color>
+</resources>
