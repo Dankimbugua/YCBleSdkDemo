@@ -16,7 +16,7 @@ public class EcgDialog {
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         LayoutInflater inflater = activity.getLayoutInflater();
         builder.setView(inflater.inflate(R.layout.ecg_dialog,null));
-        builder.setCancelable(false);
+        builder.setCancelable(true);
         dialog = builder.create();
         dialog.show();
     }

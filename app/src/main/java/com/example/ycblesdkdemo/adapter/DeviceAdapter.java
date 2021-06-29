@@ -60,9 +60,10 @@ public class DeviceAdapter extends BaseAdapter {
         }
 
         final ScanDeviceBean checkBoxModel = listVals.get(i);
-
+        Double proximidad = Double.valueOf(checkBoxModel.getDeviceRssi());
+        Double prox_bias = (1+(45+proximidad)/55)*100;
         vh.nameView.setText(checkBoxModel.getDeviceName());
-        vh.macView.setText(checkBoxModel.getDeviceMac());
+        vh.macView.setText("Proximidad "+prox_bias.shortValue()+" %");
 
         return view;
     }

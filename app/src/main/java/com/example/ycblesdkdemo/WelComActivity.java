@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -46,7 +45,7 @@ public class WelComActivity extends Activity {
     //授权后，开始
     private void afterDo() {
 
-        Intent mainIntent = new Intent(WelComActivity.this, MainActivity.class);
+        Intent mainIntent = new Intent(WelComActivity.this, logIn.class);
         startActivity(mainIntent);
     }
 
