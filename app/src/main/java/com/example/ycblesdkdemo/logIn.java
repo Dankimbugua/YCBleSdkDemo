@@ -3,6 +3,7 @@ package com.example.ycblesdkdemo;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -20,6 +21,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.ycblesdkdemo.configs.Auth;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -29,6 +31,7 @@ import java.util.HashMap;
 public class logIn extends AppCompatActivity {
 
     private SharedPreferences sharedPreferences;
+    private Auth auth;
     private Button acceso_bt;
     private Button tosignup_bt;
     private EditText username_et;
@@ -39,12 +42,19 @@ public class logIn extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_log_in);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        this.auth = new Auth(getApplicationContext());
 
         acceso_bt = findViewById(R.id.login_bt);
         tosignup_bt = findViewById(R.id.tosignup_bt);
         username_et = findViewById(R.id.username_et);
         password_et = findViewById(R.id.password_et);
         progressBar = findViewById(R.id.progress_pb);
+
+        if (!auth.getUsername().isEmpty()){
+            startActivity(new Intent(logIn.this,MainActivity.class));
+            finish();
+        }
 
         acceso_bt.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -74,33 +84,38 @@ public class logIn extends AppCompatActivity {
     }
 
     private void login (final String username, final String password) {
-        String url ="https://iot-medical.ml/login2.php";
+        String url = "https://iot-medical.ml/login2.php";
         RequestQueue requestQueue = Volley.newRequestQueue(this);
         StringRequest sringRequest = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-                try {
-                    JSONObject jsonObject = new JSONObject(response).optJSONObject("user");
-                    if(jsonObject != null) {
-                        sharedPreferences = getSharedPreferences("auth", Context.MODE_PRIVATE);
-                        SharedPreferences.Editor editor = sharedPreferences.edit();
-                        editor.putInt("user_id", Integer.parseInt(jsonObject.getString("user_id")));
-                        editor.putString("fullname",jsonObject.getString("fullname"));
-                        editor.putString("username",jsonObject.getString("username"));
-                        editor.putString("email",jsonObject.getString("email"));
-                        editor.commit();
-                        //progressBar.setVisibility(View.GONE);
-                        //Toast.makeText(getApplicationContext(), "¡Bienvenido! "+new Auth(getApplicationContext()).getUsername(), Toast.LENGTH_SHORT).show();
-                        startActivity(new Intent(logIn.this,preparation.class));
-                        finish();
-                    } else {
-                        //progressBar.setVisibility(View.INVISIBLE);
-                        progressBar.setVisibility(View.GONE);
-                        Toast.makeText(getApplicationContext(), "Acceso denegado", Toast.LENGTH_LONG).show();
+                System.out.println("xxxxxx response "+response);
+                if (!response.equalsIgnoreCase("Username or Password wrong")){
+                    try {
+                        JSONObject jsonObject = new JSONObject(response).optJSONObject("user");
+                        if(jsonObject != null) {
+                            sharedPreferences = getSharedPreferences("auth", Context.MODE_PRIVATE);
+                            SharedPreferences.Editor editor = sharedPreferences.edit();
+                            editor.putInt("user_id", Integer.parseInt(jsonObject.getString("user_id")));
+                            editor.putString("fullname",jsonObject.getString("fullname"));
+                            editor.putString("username",jsonObject.getString("username"));
+                            editor.putString("email",jsonObject.getString("email"));
+                            editor.commit();
+                            //progressBar.setVisibility(View.GONE);
+                            //Toast.makeText(getApplicationContext(), "¡Bienvenido! "+new Auth(getApplicationContext()).getUsername(), Toast.LENGTH_SHORT).show();
+                            startActivity(new Intent(logIn.this,MainActivity.class));
+                            finish();
+                        } else {
+                            //progressBar.setVisibility(View.INVISIBLE);
+                            progressBar.setVisibility(View.GONE);
+                            Toast.makeText(getApplicationContext(), "Acceso denegado", Toast.LENGTH_LONG).show();
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
                     }
-
-                } catch (JSONException e) {
-                    e.printStackTrace();
+                }else{
+                    progressBar.setVisibility(View.GONE);
+                    Toast.makeText(getApplicationContext(), "Usuario o contraseña incorrecta", Toast.LENGTH_LONG).show();
                 }
             }
         }, new Response.ErrorListener() {

@@ -8,6 +8,7 @@ public class DB extends SQLiteOpenHelper {
 
     private static final String DATABASE = "db_iot_medical.db";
     private static final String TABLE_HISTORY = "history";
+    private static final String TABLE_LOG = "log";
 
     public DB(Context context) {
         super(context, DATABASE, null, 2);
@@ -24,6 +25,13 @@ public class DB extends SQLiteOpenHelper {
                 "hrv NUMERIC NOT NULL," +
                 "cvrr NUMERIC NOT NULL," +
                 "resp_rate NUMERIC NOT NULL," +
+                "status NUMERIC NOT NULL)"
+        );
+        db.execSQL("CREATE TABLE " + TABLE_LOG + "(" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "user_id INTEGER NOT NULL," +
+                "date NUMERIC NOT NULL," +
+                "device_con NUMERIC NOT NULL," +
                 "status NUMERIC NOT NULL)"
         );
     }

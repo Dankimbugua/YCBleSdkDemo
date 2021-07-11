@@ -125,6 +125,7 @@
                             android:layout_height="wrap_content"
                             android:layout_centerInParent="true"
                             android:layout_margin="15dp"
+                            android:autofillHints="No hay dispositivo"
                             android:soundEffectsEnabled="true" />
 
                         <RelativeLayout
@@ -192,7 +193,7 @@
                 </androidx.cardview.widget.CardView>
 
                 <androidx.cardview.widget.CardView
-                    android:visibility="gone"
+                    android:visibility="visible"
                     android:id="@+id/blood_preasure_cv"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
@@ -203,6 +204,8 @@
                     app:cardElevation="6dp">
 
                     <RelativeLayout
+                        android:id="@+id/presion_rl"
+                        android:visibility="gone"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent">
 
@@ -225,7 +228,6 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center"
-                                android:layout_marginTop="18dp"
                                 android:fontFamily="sans-serif-black"
                                 android:text="Presión arterial"
                                 android:textSize="8pt" />
@@ -258,11 +260,17 @@
                                     android:textColor="@color/colorSecond"
                                     android:textSize="24pt" />
                             </LinearLayout>
+                            <TextView
+                                android:id="@+id/fecha_presion_tv"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Fecha último escaner: --"
+                                android:textAlignment="center"/>
 
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="20dp"
+                                android:layout_marginTop="30dp"
                                 android:gravity="center"
                                 android:orientation="vertical">
 
@@ -290,9 +298,9 @@
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center"
                                 android:fontFamily="sans-serif-condensed"
-                                android:text="Inicie el ECG para diagnóstico"
+                                android:layout_marginTop="12dp"
                                 android:textAlignment="center"
-                                android:textSize="8pt" />
+                                android:textSize="6pt" />
 
                             <TextView
                                 android:id="@+id/aha_tv"
@@ -304,6 +312,20 @@
                                 android:visibility="invisible" />
                         </LinearLayout>
                     </RelativeLayout>
+                    <RelativeLayout
+                        android:id="@+id/plot_ecg_rl"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <com.androidplot.xy.XYPlot
+                            android:id="@+id/ecg_plot"
+                            style="@style/APDefacto.Light"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            app:title="Electrocardiograma"/>
+
+                    </RelativeLayout>
+
                 </androidx.cardview.widget.CardView>
             </GridLayout>
 

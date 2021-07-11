@@ -30,6 +30,7 @@ public class signUp extends AppCompatActivity {
     private TextView signup_tv;
     private EditText username_et;
     private EditText password_et;
+    private EditText password_conf_et;
     private EditText fullname_et;
     private EditText email_et;
     private ProgressBar progressBar;
@@ -47,6 +48,7 @@ public class signUp extends AppCompatActivity {
         email_et = findViewById(R.id.email_et);
         username_et = findViewById(R.id.username_et);
         password_et = findViewById(R.id.password_et);
+        password_conf_et = findViewById(R.id.password_conf_et);
         progressBar = findViewById(R.id.progress_pb);
 
         registro_bt.setOnClickListener(new View.OnClickListener() {
@@ -56,11 +58,16 @@ public class signUp extends AppCompatActivity {
                 String email = email_et.getText().toString();
                 String username = username_et.getText().toString();
                 String password = password_et.getText().toString();
+                String password_conf = password_conf_et.getText().toString();
                 if (fullname.isEmpty() || email.isEmpty() || username.isEmpty() || password.isEmpty()){
                     Toast.makeText(signUp.this, "Ingrese todos los campos"+username+" "+password, Toast.LENGTH_SHORT).show();
                 }else{
-                    progressBar.setVisibility(View.VISIBLE);
-                    signup(fullname,username,email,password);
+                    if (password.equals(password_conf_et)){
+                        progressBar.setVisibility(View.VISIBLE);
+                        signup(fullname,username,email,password);
+                    }else{
+                        Toast.makeText(signUp.this, "Las contraseñas no coinciden", Toast.LENGTH_LONG).show();
+                    }
                 }
             }
         });

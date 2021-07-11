@@ -79,8 +79,8 @@ public class WelComActivity extends Activity {
                     boolean flag = shouldShowRequestPermissionRationale(deniedPermission);
                     if (!flag) {
                         //拒绝授权
-                        Toast.makeText(WelComActivity.this, "请前往设置页面，手动开启权限", Toast.LENGTH_SHORT).show();
-//                        permissionShouldShowRationale(deniedPermissionList);
+                        Toast.makeText(WelComActivity.this, "Vaya a la página de configuración para habilitar los permisos manualmente", Toast.LENGTH_SHORT).show();
+                        //permissionShouldShowRationale(deniedPermissionList);
                         return;
                     }
                 }

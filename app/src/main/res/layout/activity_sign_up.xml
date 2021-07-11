@@ -78,10 +78,23 @@
             android:hint="Contraseña"
             android:textSize="20dp" />
 
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/password_conf_et"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/password_et"
+            android:layout_marginTop="8dp"
+            android:padding="18dp"
+            android:drawableRight="@drawable/ic_baseline_lock_24"
+            android:fontFamily="sans-serif"
+            android:inputType="textPassword"
+            android:hint="Confirmar contraseña"
+            android:textSize="20dp" />
+
         <ProgressBar
             android:id="@+id/progress_pb"
             style="@android:style/Widget.DeviceDefault.Light.ProgressBar"
-            android:layout_below="@id/password_et"
+            android:layout_below="@id/password_conf_et"
             android:layout_marginTop="12dp"
             android:layout_centerHorizontal="true"
             android:layout_width="wrap_content"
@@ -94,7 +107,7 @@
             android:id="@+id/signup_bt"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/password_et"
+            android:layout_below="@+id/password_conf_et"
             android:layout_marginTop="80dp"
             android:layout_marginHorizontal="100dp"
             android:fontFamily="sans-serif-black"

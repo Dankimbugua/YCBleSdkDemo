@@ -1,6 +1,7 @@
 package com.example.ycblesdkdemo;
 
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
@@ -19,6 +20,7 @@ public class preparation extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_preparation);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         
         floatingActionButton = findViewById(R.id.floatingActionButton);
         editText = findViewById(R.id.bpm_et);

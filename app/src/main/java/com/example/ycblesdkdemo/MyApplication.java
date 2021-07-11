@@ -2,7 +2,10 @@ package com.example.ycblesdkdemo;
 
 import android.app.ActivityManager;
 import android.app.Application;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
+import android.os.Build;
 import android.util.Log;
 
 import com.example.ycblesdkdemo.model.ConnectEvent;
@@ -16,7 +19,8 @@ public class MyApplication extends Application {
     private static MyApplication instance = null;
 
 
-
+    public static final String CHANNEL_ID = "exampleServiceChannel";
+    public static final String CHANNEL_2_ID = "exampleServiceChannel_two";
 
     public static MyApplication getInstance() {
         return instance;
@@ -26,6 +30,9 @@ public class MyApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        createNotificationChannel1();
+
         String currentProcessName = getCurProcessName(this);
 
         if ("com.example.ycblesdkdemo".equals(currentProcessName)) {
@@ -37,6 +44,27 @@ public class MyApplication extends Application {
             YCBTClient.registerBleStateChange(bleConnectResponse);
 
 
+        }
+    }
+
+    private void createNotificationChannel1() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+            NotificationChannel serviceChannel1 = new NotificationChannel(
+                    CHANNEL_ID,
+                    "Example Service Channel1",
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+            serviceChannel1.setDescription("This is channel 1");
+
+            NotificationChannel serviceChannel2 = new NotificationChannel(
+                    CHANNEL_2_ID,
+                    "Example Service Channel1",
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+            serviceChannel2.setDescription("This is channel 2");
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(serviceChannel1);
+            manager.createNotificationChannel(serviceChannel2);
         }
     }
 

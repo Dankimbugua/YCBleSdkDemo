@@ -5,13 +5,16 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
@@ -64,6 +67,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private Auth auth;
+    private SharedPreferences sharedPreferences;
     private String DEVICE_BATTERY_VALUE = null;
     private String JSON_HEALTH = "[\n";
     private String JSON_SLEEP = "[\n";
@@ -71,6 +75,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String SBP_VALUE = null;
     private String HEART_VALUE = null;
     private Integer progress_count = 0;
+    private Integer bleState = 3;
+    private Integer counter = 0;
     private Boolean ecg_start = false;
     private ArrayList arrayList = new ArrayList();
     private ListView listView;
@@ -86,6 +92,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TextView DBP_tv;
     private TextView SBP_tv;
     private TextView heart_tv;
+    private TextView fecha_tv;
     private TextView preasure_tv;
     private TextView aha_tv;
     private ProgressBar progressIndicator;
@@ -108,8 +115,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
         EventBus.getDefault().register(this);
+
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
             Toast.makeText(this, "El dispositivo no soporta Bluetooth", Toast.LENGTH_SHORT).show();
@@ -117,15 +129,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (!mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, 1);
-            startScan();
+            //startScan();
         }else{
-            startScan();
+            /*int bleState = YCBTClient.connectState();
+            System.out.println("xxxxxxxxxxxxxxxx blestate: "+bleState);
+            if (bleState == 10){ //connected success
+
+            }else{
+                startScan();
+            }*/
         }
 
-        //z ligth Sleep time
-        //zzz deep sleep time
+        //public static void settingPpgCollect(int on, int collectLong, int collectInterval, BleDataResponse dataResponse)
+        //public static void settingHeartMonitor(int mode, int intervalTime, BleDataResponse dataResponse)
         this.auth = new Auth(getApplicationContext());
-        startService(new Intent(this, MyBleService.class));
+        //startService(new Intent(this, MyBleService.class));
 
         username_tv = findViewById(R.id.username_tv);
         progressIndicator = findViewById(R.id.progress_horizontal_lpi);
@@ -140,6 +158,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         device_mac = findViewById(R.id.item_mac_view);
         DBP_tv = findViewById(R.id.DBP_tv);
         SBP_tv = findViewById(R.id.SBP_tv);
+        fecha_tv = findViewById(R.id.fecha_presion_tv);
         heart_tv = findViewById(R.id.heart_tv);
         preasure_tv = findViewById(R.id.preasure_status_tv);
         aha_tv = findViewById(R.id.aha_tv);
@@ -153,16 +172,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         logout_bt.setOnClickListener(this);
 
         username_tv.setText(auth.getUsername());
-        start_ecg.setEnabled(false);
+        //start_ecg.setEnabled(false);
 
         refresh_layout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 YCBTClient.disconnectBle();
+                stopService();
                 Intent i = new Intent(MainActivity.this,MainActivity.class);
                 startActivity(i);
                 finish();
-                /*listView.setVisibility(View.VISIBLE);
+                listView.setVisibility(View.VISIBLE);
                 bloodPreasure_cv.setVisibility(View.GONE);
                 con_device_rl.setVisibility(View.GONE);
                 scan_status.setText("Seleccione su dispositivo");
@@ -171,12 +191,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 scan_anim.setAnimation(animation);
                 startScan();
                 listView.setAdapter(deviceAdapter);
-                refresh_layout.setRefreshing(false);*/
+                refresh_layout.setRefreshing(false);
             }
         });
 
-        Animation animation = AnimationUtils.loadAnimation(getApplicationContext(),R.anim.fade_in);
-        start_ecg.setAnimation(animation);
+        //Animation animation = AnimationUtils.loadAnimation(getApplicationContext(),R.anim.fade_in);
+        //start_ecg.setAnimation(animation);
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -190,49 +210,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 SPHelper.setParam(MainActivity.this, "key", scanDeviceBean.getDeviceMac());
 
-                YCBTClient.connectBle(scanDeviceBean.getDeviceMac(), new BleConnectResponse() {
-                    @Override
-                    public void onConnectResponse(final int i) {
-
-                        if (i == Constants.CODE.Code_OK){
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    if (i == 10)
-                                    Toast.makeText(MainActivity.this, "i=" + i, Toast.LENGTH_SHORT);
-                                    Animation animation = AnimationUtils.loadAnimation(getApplicationContext(),R.anim.fade_out);
-                                    scan_anim.setAnimation(animation);
-                                    listView.setVisibility(view.GONE);
-                                    con_device_rl.setVisibility(view.VISIBLE);
-                                    device_name.setText(scanDeviceBean.getDeviceName());
-                                    device_mac.setText(scanDeviceBean.getDeviceMac());
-                                    scan_status.setText("Conectado");
-                                    bloodPreasure_cv.setVisibility(View.VISIBLE);
-                                    getDeviceInfo();
-                                    getHistoryData();
-                                    settingUnit(0x00,0x00,0x00,0x01);
-                                    start_ecg.setEnabled(true);
-                                }
-                            });
-                        }
-                        else if (i == Constants.CODE.Code_Failed){
-
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    scan_status.setText("Seleccione su dispositivo");
-                                    Toast.makeText(MainActivity.this,"Fallo al conectar, intente de nuevo.",Toast.LENGTH_LONG).show();
-                                }
-                            });
-                        }
-                    }
-                });
-                new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        device_battery.setText(DEVICE_BATTERY_VALUE+"%");
-                    }
-                }, 5000);
+                //conectar dispositivo con mac
+                conDevice(scanDeviceBean.getDeviceMac(),scanDeviceBean.getDeviceName());
             }
         });
 
@@ -251,16 +230,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
+                progressIndicator.setIndeterminate(true);
+                //detener ecg
                 YCBTClient.appEcgTestEnd(new BleDataResponse() {
                     @Override
                     public void onDataResponse(int i, float v, HashMap hashMap) {
 
                     }
                 });
-                updateBloodPressureVal();
-                sendHhDataToServer();
+                //updateBloodPressureVal();
+                //sendHhDataToServer();
                 sendDataToServer();
-                new SendJsonSleepDataToServer().execute(JSON_SLEEP);
+                //new SendJsonSleepDataToServer().execute(JSON_SLEEP);
                 System.out.println("xxxxxxxxxxxx: FIN DEL ECG");
                 Integer DBP_int, SBP_int,HR_int;
                 /*DBP_int = Integer.parseInt(DBP_VALUE);
@@ -271,9 +252,128 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 ecg_anim.setVisibility(View.GONE);
                 Toast.makeText(MainActivity.this, "FIN DEL ECG", Toast.LENGTH_SHORT).show();
                 progressIndicator.setVisibility(View.GONE);
+                start_ecg.setEnabled(true);
             }
         });
     }
+
+    protected void onResume() {
+        super.onResume();
+        Auth auth = new Auth(this);
+        bleState = YCBTClient.connectState();
+        System.out.println("xxxxxxxxx ble "+bleState+" mac: "+auth.getDevice_mac());
+        if (!auth.getDevice_mac().isEmpty()){
+            if (bleState == 10){
+                refresh_layout.setEnabled(false);
+                Animation animation = AnimationUtils.loadAnimation(getApplicationContext(),R.anim.fade_out);
+                scan_anim.setAnimation(animation);
+                listView.setVisibility(View.GONE);
+                con_device_rl.setVisibility(View.VISIBLE);
+                device_name.setText(auth.getDeviece_name());
+                device_mac.setText(auth.getDevice_mac());
+                getDeviceInfo();
+                new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        device_battery.setText(DEVICE_BATTERY_VALUE+"%");
+                    }
+                }, 5000);
+                scan_status.setText("Conectado");
+                bloodPreasure_cv.setVisibility(View.VISIBLE);
+                getDeviceInfo();
+                updateValues.run();
+                start_ecg.setEnabled(true);
+            }else {
+                conDevice(auth.getDevice_mac(), auth.getDeviece_name());
+            }
+        }else{
+            listView.setVisibility(View.VISIBLE);
+            bloodPreasure_cv.setVisibility(View.GONE);
+            con_device_rl.setVisibility(View.GONE);
+            refresh_layout.setEnabled(true);
+            scan_status.setText("Seleccione su dispositivo");
+            start_ecg.setEnabled(false);
+            Animation animation = AnimationUtils.loadAnimation(getApplicationContext(),R.anim.fade_in);
+            scan_anim.setAnimation(animation);
+            startScan();
+            listView.setAdapter(deviceAdapter);
+        }
+    }
+
+    private void stopService(){
+        Intent serviceIntent = new Intent(MainActivity.this,ExampleService.class);
+        stopService(serviceIntent);
+    }
+
+    private void conDevice(String deviceMac, String deviceName){
+        YCBTClient.connectBle(deviceMac, new BleConnectResponse() {
+            @Override
+            public void onConnectResponse(final int i) {
+
+                if (i == Constants.CODE.Code_OK){
+                    boolean response = true;
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (i == 10)
+                                Toast.makeText(MainActivity.this, "i=" + i, Toast.LENGTH_SHORT);
+                            Animation animation = AnimationUtils.loadAnimation(getApplicationContext(),R.anim.fade_out);
+                            scan_anim.setAnimation(animation);
+                            listView.setVisibility(View.GONE);
+                            con_device_rl.setVisibility(View.VISIBLE);
+                            device_name.setText(deviceName);
+                            device_mac.setText(deviceMac);
+                            scan_status.setText("Conectado");
+                            bloodPreasure_cv.setVisibility(View.VISIBLE);
+                            progressIndicator.setVisibility(View.VISIBLE);
+                            progressIndicator.setIndeterminate(true);
+                            sendMessage("¡Hola!",auth.getFullname());
+                            getDeviceInfo();
+                            refresh_layout.setEnabled(false);
+                            //Iniciar foreground service
+                            Intent serviceIntent = new Intent(MainActivity.this,ExampleService.class);
+                            serviceIntent.putExtra("inputExtra","Monitoreo de brazalete "+deviceName);
+                            serviceIntent.putExtra("inputExtra_mac",deviceMac);
+                            startService(serviceIntent);
+                        }
+                    });
+                }
+                else if (i == Constants.CODE.Code_Failed){
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            scan_status.setText("Seleccione su dispositivo");
+                            Toast.makeText(MainActivity.this,"Fallo al conectar, intente de nuevo.",Toast.LENGTH_LONG).show();
+                            listView.setVisibility(View.VISIBLE);
+                            bloodPreasure_cv.setVisibility(View.GONE);
+                            con_device_rl.setVisibility(View.GONE);
+                            refresh_layout.setEnabled(true);
+                            scan_status.setText("Seleccione su dispositivo");
+                            start_ecg.setEnabled(false);
+                            Animation animation = AnimationUtils.loadAnimation(getApplicationContext(),R.anim.fade_in);
+                            scan_anim.setAnimation(animation);
+                            startScan();
+                            listView.setAdapter(deviceAdapter);
+                        }
+                    });
+                }
+            }
+        });
+        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                device_battery.setText(DEVICE_BATTERY_VALUE+"%");
+                sharedPreferences = getSharedPreferences("auth", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString("device_mac",deviceMac);
+                editor.putString("device_name",deviceName);
+                editor.commit();
+                updateValues.run();
+            }
+        }, 7000);
+    }
+
     public void sendHhDataToServer() {
         /*JSONArray jsonArray = new JSONArray(arrayList1);
         JSONObject post_dict = new JSONObject();
@@ -287,7 +387,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             e.printStackTrace();
         }*/
         new SendJsonHhDataToServer().execute(JSON_HEALTH);
-        //System.out.println("xxxxxxxxxxxx: "+JSON_HEALTH);
+        System.out.println("xxxxxxxxxxxx: "+JSON_HEALTH);
     }
     public void sendDataToServer() {
         /*ArrayList arrayList1 = new ArrayList();
@@ -295,15 +395,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             arrayList1.add((int) (Math.random()*801)-400);
         }*/
         String json = "[\n";
-        for (int i = 0; i < arrayList.size();i++){
+        Integer s = arrayList.size();
+        Integer timeSpan = 60000/s;
+        for (int i = 0; i < s;i++){
             if (i != arrayList.size()-1){
                 json += "{  \n" +
                         "    \"user_id\": "+auth.getUser_id()+",  \n" +
+                        "    \"time\": "+i*timeSpan+",  \n" +
                         "    \"ecgValue\": "+arrayList.get(i)+"  \n" +
                         "  },\n";
             }else{
                 json += "{  \n" +
                         "    \"user_id\": "+auth.getUser_id()+",  \n" +
+                        "    \"time\": "+i*timeSpan+",  \n" +
                         "    \"ecgValue\": "+arrayList.get(i)+"  \n" +
                         "  }\n]";
             }
@@ -320,7 +424,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             e.printStackTrace();
         }*/
         new SendJsonDataToServer().execute(json);
-        //System.out.println("xxxxxxxxxxxx: "+json);
+        System.out.println("xxxxxxxxxxxx: "+json);
     }
     Runnable runnableEcg = new Runnable() {
 
@@ -360,8 +464,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
 
+    private void settingHeartMonitor(int mode, int intervalTime){
+        YCBTClient.settingHeartMonitor(mode, intervalTime, new BleDataResponse() {
+            @Override
+            public void onDataResponse(int i, float v, HashMap hashMap) {
+
+            }
+        });
+    }
+
+    private void settingPpgMonitor(int intervalTime){
+        YCBTClient.settingPpgCollect(0x01,60, intervalTime, new BleDataResponse() {
+            @Override
+            public void onDataResponse(int i, float v, HashMap hashMap) {
+
+            }
+        });
+    }
+
     private void settingUnit(int distanceUnit,int weightUnit,int temperatureUnit,int timeFormat) {
         YCBTClient.settingUnit(distanceUnit, weightUnit, temperatureUnit, timeFormat, new BleDataResponse() {
+            @Override
+            public void onDataResponse(int i, float v, HashMap hashMap) {
+
+            }
+        });
+    }
+
+    private void sendMessage(String title, String msg){
+        YCBTClient.appSengMessageToDevice(0x01, title, msg, new BleDataResponse() {
             @Override
             public void onDataResponse(int i, float v, HashMap hashMap) {
 
@@ -382,8 +513,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         deviceAdapter.notifyDataSetChanged();
                     }
 
+                    //Toast.makeText(MainActivity.this, "mac=" + scanDeviceBean.getDeviceMac() + ";name=" + scanDeviceBean.getDeviceName(), Toast.LENGTH_SHORT).show();
                     Log.e("device", "mac=" + scanDeviceBean.getDeviceMac() + ";name=" + scanDeviceBean.getDeviceName() + "rssi=" + scanDeviceBean.getDeviceRssi());
 
+                }else{
+                    //Toast.makeText(MainActivity.this, "scanDeviceBean null", Toast.LENGTH_SHORT).show();
                 }
             }
         }, 6);
@@ -422,7 +556,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     "    \"cvrr\": "+cvrr+",  \n" +
                                     "    \"resp_rate\": "+respiratoryRateValue+"  \n" +
                                     "  }\n]";
-                            //System.out.println("xxxxxxxxxxxxx: "+JSON_HEALTH);
                         }else{
                             JSON_HEALTH += "{  \n" +
                                     "    \"user_id\": "+auth.getUser_id()+",  \n" +
@@ -437,6 +570,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         //System.out.println("oxigeno: "+blood_oxygen+",temperatura: "+temp+", hrv:"+hrv+",cvrr: "+cvrr+", resp rate: "+respiratoryRateValue+", fecha: "+time);
 
                     }
+                }else{
+                    System.out.println("xxxxxxxxxxxxx no health history");
                 }
             }
         });
@@ -462,7 +597,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                         "    \"sueno_ligero\": "+lightSleepTotal+",  \n" +
                                         "    \"sueno_profundo\": "+deepSleepTotal+"  \n" +
                                         "  }\n]";
-                                //System.out.println("xxxxxxxxxxxxx: "+JSON_HEALTH);
                             }else{
                                 JSON_SLEEP += "{  \n" +
                                         "    \"user_id\": "+auth.getUser_id()+",  \n" +
@@ -471,7 +605,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                         "    \"sueno_profundo\": "+deepSleepTotal+"  \n" +
                                         "  },\n";
                             }
-                            System.out.println(JSON_SLEEP);
                         }
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -508,8 +641,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.logout_bt:
-                this.auth.logout();
+                auth.logout();
                 YCBTClient.disconnectBle();
+                bleState = 3;
+                ExampleService.cancelAlarm(1,this);
+                stopService();
                 Intent i = new Intent(this, logIn.class);
                 startActivity(i);
                 finish();
@@ -522,12 +658,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
 
             case R.id.bt_write_test: {
+
+                /*Intent serviceIntent = new Intent(MainActivity.this,ExampleService.class);
+                serviceIntent.putExtra("inputExtra","Hola");
+                startService(serviceIntent);*/
+
                 EcgDialog ecgDialog = new EcgDialog(MainActivity.this);
                 ecgDialog.startLoadingDialog();
-                //runnableProg.run();
                 prog();
+
                 AITools.getInstance().Init();
-                //AITools.getInstance().getResult(new ArrayList<Integer>());
 
                 YCBTClient.appEcgTestStart(new BleDataResponse() {
                     @Override
@@ -537,14 +677,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }, new BleRealDataResponse() {
                     @Override
                     public void onRealDataResponse(int i, HashMap hashMap) {
-                        YCBTClient.getElectrodeLocationInfo(new BleDataResponse() {
-                            @Override
-                            public void onDataResponse(int code, float ratio, HashMap resultMap) {
-                                if (resultMap != null){
-                                    System.out.println(resultMap.toString());
-                                }
-                            }
-                        });
                         if (hashMap != null) {
                             int dataType = (int) hashMap.get("dataType");
                             Log.e("qob", "onRealDataResponse xxxxxxxxxxxxxxxxxxxxxxx " + i + " dataType " + dataType);
@@ -565,14 +697,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 float param = (float) hashMap.get("data");
                                 Log.e("qob", "RR invo " + param);
                             } else if (i == Constants.DATATYPE.Real_UploadBlood) {
-                                //System.out.println("xxxxxxxxxxxxxxxxxxxx vuelva a colorcar el dedo");
                                 int heart = (int) hashMap.get("heartValue");//心率
                                 int tDBP = (int) hashMap.get("bloodDBP");//高压
                                 int tSBP = (int) hashMap.get("bloodSBP");//低压
                                 DBP_VALUE = String.valueOf(tDBP);
-                                //DBP_VALUE = "140";
                                 SBP_VALUE = String.valueOf(tSBP);
-                                //SBP_VALUE = "120";
                                 HEART_VALUE = String.valueOf(heart);
                                 //System.out.println("xxxxxxxxxxx: "+DBP_VALUE+", "+SBP_VALUE+", "+HEART_VALUE);
                             }
@@ -581,7 +710,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 });
                 start_ecg.setEnabled(false);
                 ecg_anim.setVisibility(view.VISIBLE);
-                //updateValues.run();
                 break;
             }
         }
@@ -610,30 +738,46 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Runnable updateValues = new Runnable() {
         @Override
         public void run() {
-            //System.out.println("XXXXXXXXXXXXXX: "+device_battery.getText());
-            if (device_battery.getText().equals("null%") && DEVICE_BATTERY_VALUE != null){
-                device_battery.setText(DEVICE_BATTERY_VALUE+"%");
-                scan_status.setText("Conectado");
-            }else{
-                if (DEVICE_BATTERY_VALUE == null){
-                    getDeviceInfo();
+            DBP_VALUE = String.valueOf(ExampleService.gettDBP());
+            SBP_VALUE = String.valueOf(ExampleService.gettSBP());
+            HEART_VALUE = String.valueOf(ExampleService.getHeart());
+            String fecha = ExampleService.getFecha_presion();
+            if (DBP_VALUE.equals("0") || SBP_VALUE.equals("0") || HEART_VALUE.equals("0") || fecha.equals("--")){
+                Toast.makeText(MainActivity.this, "Reintentando escaner... "+counter, Toast.LENGTH_SHORT).show();
+                counter = counter + 1;
+                if (counter >= 5){
+                    DBP_tv.setText("??");
+                    SBP_tv.setText("???");
+                    heart_tv.setText("??");
+                    fecha_tv.setText("Valor nulo - Fecha:\n"+ExampleService.getFecha_presion());
+                    counter = 0;
+                    progressIndicator.setIndeterminate(false);
+                    progressIndicator.setVisibility(View.GONE);
+                    start_ecg.setEnabled(true);
+                }else{
+                    handler.postDelayed(updateValues,5000);
                 }
+            }else{
+                fecha_tv.setText("Fecha último escaner\n"+ExampleService.getFecha_presion());
+                updateBloodPressureVal();
+                progressIndicator.setIndeterminate(false);
+                progressIndicator.setVisibility(View.GONE);
+                start_ecg.setEnabled(true);
             }
+            System.out.println("xxxxxxxxxxxx counter: "+counter);
         }
     };
 
     private void updateBloodPressureVal(){
         if (DBP_VALUE != null){
+            Integer DBP_int;
+            Integer SBP_int;
             DBP_tv.setText(DBP_VALUE);
             SBP_tv.setText(SBP_VALUE);
             heart_tv.setText(HEART_VALUE);
-            Integer DBP_int;
-            Integer SBP_int;
-            Integer HR_int;
             DBP_int = Integer.parseInt(DBP_VALUE);
             SBP_int = Integer.parseInt(SBP_VALUE);
-            HR_int = Integer.parseInt(HEART_VALUE);
-            insertHistoryToDB(auth.getUser_id(),DBP_int,SBP_int,HR_int);
+            //insertHistoryToDB(auth.getUser_id(),DBP_int,SBP_int,HR_int);
             if (DBP_int < 120 && SBP_int < 80){
                 preasure_tv.setText("Presión arterial Normal*");
                 aha_tv.setVisibility(View.VISIBLE);
